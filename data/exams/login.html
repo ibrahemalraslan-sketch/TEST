@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TEST - بنك اختبارات طلاب الطب</title>
+
+  <!-- الخط العربي الرسمي: Cairo -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- مكتبات Firebase v9 Compat الرسمية -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <style>
+    :root {
+      --primary: #0d9488;
+      --primary-hover: #0f766e;
+      --primary-light: #ccfbf1;
+      --bg-start: #f0fdfa;
+      --bg-end: #ccfbf1;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: rgba(13, 148, 136, 0.22);
+      --input-bg: #f8fafc;
+      --error-bg: #fef2f2;
+      --error-text: #b91c1c;
+      --error-border: #fecaca;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Cairo', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, var(--bg-start) 0%, var(--bg-end) 100%);
+      padding: 10px 14px;
+      color: var(--text-main);
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 410px;
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 14px 22px 16px;
+      box-shadow: 0 16px 32px -8px rgba(13, 148, 136, 0.16), 0 3px 8px rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* حاوية الدب الكرتوني */
+    .mascot-container {
+      width: 155px;
+      height: 155px;
+      margin-top: -4px;
+      margin-bottom: 2px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+    }
+
+    .mascot-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    /* حركات الأذرع التفاعلية */
+    #arms-down {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease;
+      transform-origin: center bottom;
+    }
+
+    #arms-shy {
+      transition: transform 0.42s cubic-bezier(0.34, 1.45, 0.64, 1), opacity 0.2s ease;
+      transform-origin: center bottom;
+      transform: translateY(115px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #shy-paw-left,
+    #shy-paw-right {
+      transition: transform 0.35s ease;
+      transform-origin: center center;
+    }
+
+    /* وضع الخجل */
+    .mascot-container.shy #arms-down {
+      transform: translateY(24px);
+      opacity: 0;
+    }
+
+    .mascot-container.shy #arms-shy {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* وضع التلصص بعين واحدة */
+    .mascot-container.peeking #arms-down {
+      transform: translateY(24px);
+      opacity: 0;
+    }
+
+    .mascot-container.peeking #arms-shy {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .mascot-container.peeking #shy-paw-right {
+      transform: translateY(36px) rotate(16deg);
+    }
+
+    /* ترويسة البطاقة */
+    .auth-header {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .auth-title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--primary);
+      letter-spacing: 1px;
+      line-height: 1;
+    }
+
+    .auth-subtitle {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-weight: 600;
+    }
+
+    /* أزرار التبديل */
+    .tab-nav {
+      display: flex;
+      width: 100%;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: 10px;
+      margin-bottom: 11px;
+      gap: 3px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 5px 0;
+      border: none;
+      background: transparent;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--card-bg);
+      color: var(--primary);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    /* حقول الإدخال */
+    .auth-form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .form-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .field-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .field-icon {
+      position: absolute;
+      right: 12px;
+      width: 18px;
+      height: 18px;
+      color: #94a3b8;
+      pointer-events: none;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 7px 38px 7px 14px;
+      border-radius: 10px;
+      border: 1.5px solid #e2e8f0;
+      background: var(--input-bg);
+      font-size: 0.9rem;
+      color: var(--text-main);
+      font-weight: 600;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+    }
+
+    .toggle-pass-btn {
+      position: absolute;
+      left: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+
+    .toggle-pass-btn:hover {
+      color: var(--primary);
+    }
+
+    /* صندوق الرسائل والتنبيهات */
+    .alert-box {
+      width: 100%;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      background: var(--error-bg);
+      color: var(--error-text);
+      border: 1px solid var(--error-border);
+    }
+
+    /* الأزرار */
+    .submit-btn {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(13, 148, 136, 0.22);
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(13, 148, 136, 0.28);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      margin: 8px 0;
+      color: #94a3b8;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    .divider span {
+      padding: 0 8px;
+    }
+
+    .google-btn {
+      width: 100%;
+      padding: 7px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      background: #ffffff;
+      color: #334155;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .google-btn:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="auth-card">
+    <!-- الدب الطبيب الكرتوني المرجعي -->
+    <div class="mascot-container" id="mascot">
+      <svg class="mascot-svg" viewBox="0 0 300 320">
+        <g id="feet">
+          <path d="M 108 260 V 292 C 108 304 136 304 136 292 V 260 Z" fill="#be834e" stroke="#231815" stroke-width="4" stroke-linejoin="round" />
+          <path d="M 117 288 V 298 M 127 288 V 298" stroke="#231815" stroke-width="2.8" stroke-linecap="round" />
+          <path d="M 164 260 V 292 C 164 304 192 304 192 292 V 260 Z" fill="#be834e" stroke="#231815" stroke-width="4" stroke-linejoin="round" />
+          <path d="M 173 288 V 298 M 183 288 V 298" stroke="#231815" stroke-width="2.8" stroke-linecap="round" />
+          <path d="M 136 258 C 144 252 156 252 164 258 Z" fill="#be834e" stroke="#231815" stroke-width="3" />
+        </g>
+
+        <g id="torso">
+          <path d="M 118 152 H 182 V 262 H 118 Z" fill="#4688b7" stroke="#231815" stroke-width="4" stroke-linejoin="round" />
+          <path d="M 134 152 C 138 168 162 168 166 152" fill="none" stroke="#2b5f85" stroke-width="3.5" stroke-linecap="round" />
+
+          <path d="M 92 152 C 80 174 74 212 76 262 H 122 C 126 230 128 190 118 152 Z" fill="#ffffff" stroke="#231815" stroke-width="4" stroke-linejoin="round" />
+          <path d="M 208 152 C 220 174 226 212 224 262 H 178 C 174 230 172 190 182 152 Z" fill="#ffffff" stroke="#231815" stroke-width="4" stroke-linejoin="round" />
+
+          <path d="M 94 152 L 122 184 L 92 192" fill="#ffffff" stroke="#231815" stroke-width="3.5" stroke-linejoin="round" />
+          <path d="M 206 152 L 178 184 L 208 192" fill="#ffffff" stroke="#231815" stroke-width="3.5" stroke-linejoin="round" />
+
+          <rect x="88" y="218" width="24" height="24" rx="4" fill="#ffffff" stroke="#231815" stroke-width="3" />
+          <path d="M 100 224 V 236 M 94 230 H 106" stroke="#0284c7" stroke-width="3.2" stroke-linecap="round" />
+
+          <rect x="188" y="218" width="24" height="24" rx="4" fill="#ffffff" stroke="#231815" stroke-width="3" />
+          <path d="M 200 224 V 236 M 194 230 H 206" stroke="#0284c7" stroke-width="3.2" stroke-linecap="round" />
+        </g>
+
+        <g id="stethoscope">
+          <path d="M 90 144 C 78 192 120 222 150 222 C 180 222 222 192 210 144" fill="none" stroke="#2c3e50" stroke-width="4.8" stroke-linecap="round" />
+          <path d="M 150 222 C 168 222 190 210 194 196" fill="none" stroke="#2c3e50" stroke-width="4.8" stroke-linecap="round" />
+          <circle cx="194" cy="196" r="10.5" fill="#94a3b8" stroke="#231815" stroke-width="3.2" />
+          <circle cx="194" cy="196" r="5" fill="#e2e8f0" stroke="#231815" stroke-width="1.8" />
+        </g>
+
+        <g id="arms-down">
+          <path d="M 80 156 C 66 180 60 206 68 224 C 76 228 85 224 87 216 C 91 198 93 176 95 160 Z" fill="#ffffff" stroke="#231815" stroke-width="3.8" stroke-linejoin="round" />
+          <circle cx="73" cy="232" r="12.5" fill="#be834e" stroke="#231815" stroke-width="3.2" />
+          <ellipse cx="73" cy="232" rx="6" ry="5" fill="#fde3c7" />
+
+          <path d="M 220 156 C 234 180 240 206 232 224 C 224 228 215 224 213 216 C 209 198 207 176 205 160 Z" fill="#ffffff" stroke="#231815" stroke-width="3.8" stroke-linejoin="round" />
+          <circle cx="227" cy="232" r="12.5" fill="#be834e" stroke="#231815" stroke-width="3.2" />
+          <ellipse cx="227" cy="232" rx="6" ry="5" fill="#fde3c7" />
+        </g>
+
+        <g id="head">
+          <circle cx="96" cy="62" r="25" fill="#be834e" stroke="#231815" stroke-width="4" />
+          <circle cx="96" cy="62" r="14" fill="#f5a4aa" stroke="#231815" stroke-width="2.2" />
+
+          <circle cx="204" cy="62" r="25" fill="#be834e" stroke="#231815" stroke-width="4" />
+          <circle cx="204" cy="62" r="14" fill="#f5a4aa" stroke="#231815" stroke-width="2.2" />
+
+          <path d="M 150 42 C 212 42 224 78 224 120 C 224 162 202 178 150 178 C 98 178 76 162 76 120 C 76 78 88 42 150 42 Z" fill="#be834e" stroke="#231815" stroke-width="4" stroke-linejoin="round" />
+
+          <ellipse cx="98" cy="132" rx="12" ry="8" fill="#fba1a1" opacity="0.55" />
+          <ellipse cx="202" cy="132" rx="12" ry="8" fill="#fba1a1" opacity="0.55" />
+
+          <ellipse cx="150" cy="132" rx="34" ry="24" fill="#fde3c7" stroke="#231815" stroke-width="3.5" />
+          
+          <path d="M 138 122 C 138 117 162 117 162 122 C 162 129 153 133 150 133 C 147 133 138 129 138 122 Z" fill="#231815" />
+          <ellipse cx="146" cy="120" rx="3" ry="1.6" fill="#ffffff" />
+          
+          <path d="M 150 133 L 150 141 M 141 140 Q 150 148 159 140" fill="none" stroke="#231815" stroke-width="3.2" stroke-linecap="round" />
+
+          <ellipse cx="118" cy="104" rx="8.5" ry="11.5" fill="#ffffff" stroke="#231815" stroke-width="3.5" />
+          <g id="pupil-left">
+            <circle cx="118" cy="104" r="7.2" fill="#231815" />
+            <circle cx="115.5" cy="101" r="2.5" fill="#ffffff" />
+          </g>
+
+          <ellipse cx="182" cy="104" rx="8.5" ry="11.5" fill="#ffffff" stroke="#231815" stroke-width="3.5" />
+          <g id="pupil-right">
+            <circle cx="182" cy="104" r="7.2" fill="#231815" />
+            <circle cx="179.5" cy="101" r="2.5" fill="#ffffff" />
+          </g>
+        </g>
+
+        <g id="arms-shy">
+          <g id="shy-paw-left">
+            <path d="M 76 195 C 68 155 92 122 110 110 L 124 126 C 108 136 92 162 92 198 Z" fill="#ffffff" stroke="#231815" stroke-width="3.8" stroke-linejoin="round" />
+            <circle cx="118" cy="104" r="17" fill="#be834e" stroke="#231815" stroke-width="3.5" />
+            <ellipse cx="118" cy="104" rx="8" ry="7" fill="#fde3c7" />
+            <circle cx="111" cy="94" r="2.6" fill="#fde3c7" />
+            <circle cx="118" cy="91" r="2.6" fill="#fde3c7" />
+            <circle cx="125" cy="94" r="2.6" fill="#fde3c7" />
+          </g>
+
+          <g id="shy-paw-right">
+            <path d="M 224 195 C 232 155 208 122 190 110 L 176 126 C 192 136 208 162 208 198 Z" fill="#ffffff" stroke="#231815" stroke-width="3.8" stroke-linejoin="round" />
+            <circle cx="182" cy="104" r="17" fill="#be834e" stroke="#231815" stroke-width="3.5" />
+            <ellipse cx="182" cy="104" rx="8" ry="7" fill="#fde3c7" />
+            <circle cx="175" cy="94" r="2.6" fill="#fde3c7" />
+            <circle cx="182" cy="91" r="2.6" fill="#fde3c7" />
+            <circle cx="189" cy="94" r="2.6" fill="#fde3c7" />
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <div class="auth-header">
+      <h1 class="auth-title">TEST</h1>
+      <p class="auth-subtitle">سجّل دخولك للمتابعة واستعراض بنك الأسئلة</p>
+    </div>
+
+    <div class="tab-nav">
+      <button class="tab-btn active" id="tab-login" type="button">تسجيل الدخول</button>
+      <button class="tab-btn" id="tab-signup" type="button">حساب جديد</button>
+    </div>
+
+    <div class="alert-box" id="alert-box">
+      <span id="alert-text"></span>
+    </div>
+
+    <form class="auth-form" id="auth-form" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="email">البريد الإلكتروني</label>
+        <div class="field-wrapper">
+          <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+          <input type="email" id="email" class="form-input" placeholder="doctor@example.com" required autocomplete="email" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">كلمة المرور</label>
+        <div class="field-wrapper">
+          <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <input type="password" id="password" class="form-input" placeholder="••••••••" required autocomplete="current-password" />
+          <button type="button" class="toggle-pass-btn" id="toggle-password-btn" aria-label="إظهار أو إخفاء كلمة المرور">
+            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn">
+        <span class="spinner" id="btn-spinner"></span>
+        <span id="btn-text">تسجيل الدخول</span>
+      </button>
+
+      <div class="divider">
+        <span>أو من خلال</span>
+      </div>
+
+      <button type="button" class="google-btn" id="google-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+          <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+        </svg>
+        <span>المتابعة باستخدام Google</span>
+      </button>
+    </form>
+  </div>
+
+  <script>
+    // إعدادات وتكوين Firebase الرسمية الخاصة بك
+    const firebaseConfig = {
+      apiKey: "AIzaSyCvPSN617TrSgDgAEFoj-ZcDByot_EU_h0",
+      authDomain: "test-med9.firebaseapp.com",
+      projectId: "test-med9",
+      storageBucket: "test-med9.firebasestorage.app",
+      messagingSenderId: "304730828117",
+      appId: "1:304730828117:web:3bc288278a1c53ed9253dc",
+      measurementId: "G-6RY4FEJQRX"
+    };
+
+    let auth = null;
+    let isSignUpMode = false;
+
+    // تشغيل وتهيئة الخدمة
+    if (typeof firebase !== 'undefined') {
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        auth = firebase.auth();
+        auth.onAuthStateChanged((user) => {
+          if (user) window.location.href = 'index.html';
+        });
+      } catch (err) {
+        console.warn("Firebase Init:", err.message);
+      }
+    }
+
+    // عناصر الواجهة
+    const mascot = document.getElementById('mascot');
+    const pupilLeft = document.getElementById('pupil-left');
+    const pupilRight = document.getElementById('pupil-right');
+
+    const tabLogin = document.getElementById('tab-login');
+    const tabSignup = document.getElementById('tab-signup');
+    const authForm = document.getElementById('auth-form');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const togglePasswordBtn = document.getElementById('toggle-password-btn');
+    const eyeIcon = document.getElementById('eye-icon');
+
+    const submitBtn = document.getElementById('submit-btn');
+    const btnText = document.getElementById('btn-text');
+    const btnSpinner = document.getElementById('btn-spinner');
+    const googleBtn = document.getElementById('google-btn');
+    const alertBox = document.getElementById('alert-box');
+    const alertText = document.getElementById('alert-text');
+
+    // حركة العيون
+    let isCoveringEyes = false;
+    let isPeeking = false;
+
+    function getCenter(el) {
+      const rect = el.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
+
+    function movePupil(pupil, targetX, targetY, maxD = 4.2) {
+      const center = getCenter(pupil);
+      const dx = targetX - center.x;
+      const dy = targetY - center.y;
+      const angle = Math.atan2(dy, dx);
+      const dist = Math.min(maxD, Math.hypot(dx, dy) / 16);
+      pupil.style.transform = `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist}px)`;
+    }
+
+    function resetPupils() {
+      pupilLeft.style.transform = 'translate(0px, 0px)';
+      pupilRight.style.transform = 'translate(0px, 0px)';
+    }
+
+    function onPointerMove(e) {
+      if (isCoveringEyes && !isPeeking) return;
+      const cx = e.touches ? e.touches[0].clientX : e.clientX;
+      const cy = e.touches ? e.touches[0].clientY : e.clientY;
+
+      if (!isCoveringEyes) {
+        movePupil(pupilLeft, cx, cy);
+        movePupil(pupilRight, cx, cy);
+      } else if (isPeeking) {
+        movePupil(pupilRight, cx, cy, 4.8);
+      }
+    }
+
+    window.addEventListener('mousemove', onPointerMove, { passive: true });
+    window.addEventListener('touchmove', onPointerMove, { passive: true });
+
+    function onEmailTyping() {
+      if (isCoveringEyes) return;
+      const len = emailInput.value.length;
+      const gazeX = Math.min(3.2, Math.max(-3.2, (len - 14) * 0.22));
+      pupilLeft.style.transform = `translate(${gazeX}px, 3.8px)`;
+      pupilRight.style.transform = `translate(${gazeX}px, 3.8px)`;
+    }
+
+    emailInput.addEventListener('focus', onEmailTyping);
+    emailInput.addEventListener('input', onEmailTyping);
+    emailInput.addEventListener('blur', resetPupils);
+
+    function activateShy() {
+      isCoveringEyes = true;
+      if (isPeeking) {
+        mascot.classList.remove('shy');
+        mascot.classList.add('peeking');
+      } else {
+        mascot.classList.remove('peeking');
+        mascot.classList.add('shy');
+        resetPupils();
+      }
+    }
+
+    function deactivateShy() {
+      isCoveringEyes = false;
+      isPeeking = false;
+      mascot.classList.remove('shy', 'peeking');
+      resetPupils();
+    }
+
+    passwordInput.addEventListener('focus', activateShy);
+    passwordInput.addEventListener('blur', () => {
+      setTimeout(() => {
+        if (document.activeElement !== passwordInput && document.activeElement !== togglePasswordBtn) {
+          deactivateShy();
+        }
+      }, 140);
+    });
+
+    togglePasswordBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isPass = passwordInput.getAttribute('type') === 'password';
+
+      if (isPass) {
+        passwordInput.setAttribute('type', 'text');
+        isPeeking = true;
+        mascot.classList.remove('shy');
+        mascot.classList.add('peeking');
+
+        eyeIcon.innerHTML = `
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+        `;
+      } else {
+        passwordInput.setAttribute('type', 'password');
+        isPeeking = false;
+        if (document.activeElement === passwordInput || isCoveringEyes) {
+          mascot.classList.remove('peeking');
+          mascot.classList.add('shy');
+          resetPupils();
+        }
+
+        eyeIcon.innerHTML = `
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        `;
+      }
+      passwordInput.focus();
+    });
+
+    tabLogin.addEventListener('click', () => {
+      if (!isSignUpMode) return;
+      isSignUpMode = false;
+      tabLogin.classList.add('active');
+      tabSignup.classList.remove('active');
+      btnText.textContent = "تسجيل الدخول";
+      hideAlert();
+    });
+
+    tabSignup.addEventListener('click', () => {
+      if (isSignUpMode) return;
+      isSignUpMode = true;
+      tabSignup.classList.add('active');
+      tabLogin.classList.remove('active');
+      btnText.textContent = "إنشاء حساب جديد";
+      hideAlert();
+    });
+
+    function showAlert(msg) {
+      alertText.textContent = msg;
+      alertBox.style.display = 'flex';
+    }
+
+    function hideAlert() {
+      alertBox.style.display = 'none';
+    }
+
+    function setLoading(loading) {
+      submitBtn.disabled = loading;
+      googleBtn.disabled = loading;
+      btnSpinner.style.display = loading ? 'inline-block' : 'none';
+      btnText.style.display = loading ? 'none' : 'inline-block';
+    }
+
+    function getErrorMessage(code) {
+      switch (code) {
+        case 'auth/invalid-email':
+          return 'البريد الإلكتروني المدخل غير صالح.';
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+          return 'بيانات الدخول غير صحيحة، يرجى التحقق.';
+        case 'auth/email-already-in-use':
+          return 'البريد الإلكتروني مسجل مسبقاً، تفضل بالدخول.';
+        case 'auth/weak-password':
+          return 'كلمة المرور يجب أن تتكون من 6 خانات على الأقل.';
+        case 'auth/popup-closed-by-user':
+          return 'تم إلغاء تسجيل الدخول باستخدام Google.';
+        default:
+          return 'حدث خطأ غير متوقع، يرجى إعادة المحاولة لاحقاً.';
+      }
+    }
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAlert();
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        showAlert('يرجى ملء جميع الحقول للمتابعة.');
+        return;
+      }
+
+      if (!auth) {
+        showAlert('خدمة Firebase غير مهيأة.');
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        if (isSignUpMode) {
+          await auth.createUserWithEmailAndPassword(email, password);
+        } else {
+          await auth.signInWithEmailAndPassword(email, password);
+        }
+        window.location.href = 'index.html';
+      } catch (err) {
+        showAlert(getErrorMessage(err.code));
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    googleBtn.addEventListener('click', async () => {
+      hideAlert();
+      if (!auth) {
+        showAlert('خدمة Firebase غير مهيأة.');
+        return;
+      }
+
+      setLoading(true);
+      const provider = new firebase.auth.GoogleAuthProvider();
+
+      try {
+        await auth.signInWithPopup(provider);
+        window.location.href = 'index.html';
+      } catch (err) {
+        if (err.code !== 'auth/popup-closed-by-user') {
+          showAlert(getErrorMessage(err.code));
+        }
+      } finally {
+        setLoading(false);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>الفصل الدراسي - بنك اختبارات كلية الطب البشري</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['Tajawal', 'Cairo', 'sans-serif'] } } }
+    }
+  </script>
+  <style>
+    body { font-family:'Tajawal', sans-serif; background:#f8fafc; color:#0f172a; -webkit-tap-highlight-color: transparent; }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 antialiased">
+
+  <header class="bg-white/95 backdrop-blur-md border-b border-sky-100 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-4xl mx-auto px-4 py-3">
+      <nav class="text-[11px] text-slate-400 mb-1" id="breadcrumb">...</nav>
+      <h1 id="page-title" class="text-lg sm:text-xl font-black text-sky-950">جاري التحميل...</h1>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 py-6">
+    <div id="subjects-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+    <p id="error-state" class="hidden text-center text-slate-400 text-sm py-10">تعذر إيجاد هذا الفصل الدراسي.</p>
+  </main>
+
+  <script src="assets/site.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const yearId = params.get('year');
+    const semId = params.get('sem');
+
+    async function boot() {
+      const curriculum = await loadCurriculum();
+      const year = findYear(curriculum, yearId);
+      const semester = findSemester(year, semId);
+
+      if (!year || !semester) {
+        document.getElementById('error-state').classList.remove('hidden');
+        return;
+      }
+
+      document.title = `${semester.name} - ${year.name}`;
+      document.getElementById('page-title').innerText = `${year.name} — ${semester.name}`;
+      document.getElementById('breadcrumb').innerHTML = `
+        <a href="index.html" class="hover:text-sky-600">الرئيسية</a>
+        <span class="mx-1">/</span>
+        <a href="year.html?year=${year.id}" class="hover:text-sky-600">${escapeHtml(year.name)}</a>
+        <span class="mx-1">/</span>
+        <span>${escapeHtml(semester.name)}</span>
+      `;
+
+      const grid = document.getElementById('subjects-grid');
+      semester.subjects.forEach(subject => {
+        const stats = subjectStats(subject);
+        const card = document.createElement('a');
+        card.href = `subject.html?year=${year.id}&sem=${semester.id}&subject=${encodeURIComponent(subject.id)}`;
+        card.className = 'bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-sky-300 transition flex items-center justify-between gap-3';
+
+        let statusBadge = `<span class="text-[10px] font-bold text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">لا اختبارات بعد</span>`;
+        if (stats.total > 0) {
+          if (stats.completed === stats.total) {
+            statusBadge = `<span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">مكتملة ✓</span>`;
+          } else if (stats.completed > 0 || stats.inProgress > 0) {
+            statusBadge = `<span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">${stats.completed}/${stats.total} مكتمل</span>`;
+          } else {
+            statusBadge = `<span class="text-[10px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-full">${stats.total} اختبار</span>`;
+          }
+        }
+
+        card.innerHTML = `
+          <span class="font-bold text-sm text-slate-900">${escapeHtml(subject.name)}</span>
+          ${statusBadge}
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    boot();
+  </script>
+</body>
+</html>

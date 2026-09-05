@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>السنة الدراسية - بنك اختبارات كلية الطب البشري</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['Tajawal', 'Cairo', 'sans-serif'] } } }
+    }
+  </script>
+  <style>
+    body { font-family:'Tajawal', sans-serif; background:#f8fafc; color:#0f172a; -webkit-tap-highlight-color: transparent; }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 antialiased">
+
+  <header class="bg-white/95 backdrop-blur-md border-b border-sky-100 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-4xl mx-auto px-4 py-3">
+      <nav class="text-[11px] text-slate-400 mb-1">
+        <a href="index.html" class="hover:text-sky-600">الرئيسية</a>
+        <span class="mx-1">/</span>
+        <span id="breadcrumb-year">...</span>
+      </nav>
+      <h1 id="page-title" class="text-lg sm:text-xl font-black text-sky-950">جاري التحميل...</h1>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 py-6">
+    <div id="semesters-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+    <p id="error-state" class="hidden text-center text-slate-400 text-sm py-10">تعذر إيجاد هذه السنة الدراسية.</p>
+  </main>
+
+  <script src="assets/site.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const yearId = params.get('year');
+
+    async function boot() {
+      const curriculum = await loadCurriculum();
+      const year = findYear(curriculum, yearId);
+
+      if (!year) {
+        document.getElementById('error-state').classList.remove('hidden');
+        return;
+      }
+
+      document.title = `${year.name} - بنك اختبارات كلية الطب البشري`;
+      document.getElementById('page-title').innerText = year.name;
+      document.getElementById('breadcrumb-year').innerText = year.name;
+
+      const grid = document.getElementById('semesters-grid');
+      year.semesters.forEach(semester => {
+        const stats = semesterStats(semester);
+        const card = document.createElement('a');
+        card.href = `semester.html?year=${year.id}&sem=${semester.id}`;
+        card.className = 'bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-sky-300 transition flex flex-col gap-2';
+        card.innerHTML = `
+          <h2 class="font-extrabold text-base text-slate-900">${escapeHtml(semester.name)}</h2>
+          <p class="text-[11px] text-slate-500">${semester.subjectCount || semester.subjects.length} مادة</p>
+          <p class="text-[11px] text-slate-400">${stats.totalExams > 0 ? `${stats.completedExams} / ${stats.totalExams} اختبار مكتمل` : 'لا توجد اختبارات مضافة بعد'}</p>
+          ${stats.totalExams > 0 ? progressBarHtml(stats.completedExams, stats.totalExams) : ''}
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    boot();
+  </script>
+</body>
+</html>

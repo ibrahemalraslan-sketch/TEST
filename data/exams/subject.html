@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>المادة - بنك اختبارات كلية الطب البشري</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['Tajawal', 'Cairo', 'sans-serif'] } } }
+    }
+  </script>
+  <style>
+    body { font-family:'Tajawal', sans-serif; background:#f8fafc; color:#0f172a; -webkit-tap-highlight-color: transparent; }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 antialiased">
+
+  <header class="bg-white/95 backdrop-blur-md border-b border-sky-100 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-4xl mx-auto px-4 py-3">
+      <nav class="text-[11px] text-slate-400 mb-1" id="breadcrumb">...</nav>
+      <h1 id="page-title" class="text-lg sm:text-xl font-black text-sky-950">جاري التحميل...</h1>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 py-6">
+    <div id="exams-list" class="flex flex-col gap-2.5"></div>
+    <p id="empty-subject" class="hidden text-center text-slate-400 text-sm bg-white border border-dashed border-slate-200 rounded-2xl py-10 px-4">
+      لا توجد اختبارات مضافة لهذه المادة بعد.<br>
+      <span class="text-[11px]">أضف ملف اختبار JSON جديد وسجّله في <code class="bg-slate-100 px-1 rounded">data/curriculum.json</code> ليظهر هنا.</span>
+    </p>
+    <p id="error-state" class="hidden text-center text-slate-400 text-sm py-10">تعذر إيجاد هذه المادة.</p>
+  </main>
+
+  <script src="assets/site.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const yearId = params.get('year');
+    const semId = params.get('sem');
+    const subjectId = params.get('subject');
+
+    const statusMeta = {
+      'completed':   { label: 'مكتمل ✓',     cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+      'in-progress': { label: 'قيد التقدم',   cls: 'text-amber-700 bg-amber-50 border-amber-200' },
+      'not-started': { label: 'لم يبدأ',      cls: 'text-slate-500 bg-slate-50 border-slate-200' }
+    };
+
+    async function boot() {
+      const curriculum = await loadCurriculum();
+      const year = findYear(curriculum, yearId);
+      const semester = findSemester(year, semId);
+      const subject = findSubject(semester, subjectId);
+
+      if (!year || !semester || !subject) {
+        document.getElementById('error-state').classList.remove('hidden');
+        return;
+      }
+
+      document.title = `${subject.name} - ${year.name}`;
+      document.getElementById('page-title').innerText = subject.name;
+      document.getElementById('breadcrumb').innerHTML = `
+        <a href="index.html" class="hover:text-sky-600">الرئيسية</a>
+        <span class="mx-1">/</span>
+        <a href="year.html?year=${year.id}" class="hover:text-sky-600">${escapeHtml(year.name)}</a>
+        <span class="mx-1">/</span>
+        <a href="semester.html?year=${year.id}&sem=${semester.id}" class="hover:text-sky-600">${escapeHtml(semester.name)}</a>
+        <span class="mx-1">/</span>
+        <span>${escapeHtml(subject.name)}</span>
+      `;
+
+      if (subject.exams.length === 0) {
+        document.getElementById('empty-subject').classList.remove('hidden');
+        return;
+      }
+
+      const list = document.getElementById('exams-list');
+      subject.exams.forEach(exam => {
+        const progress = getExamProgress(exam.id);
+        const status = progress ? progress.status : 'not-started';
+        const meta = statusMeta[status] || statusMeta['not-started'];
+
+        const row = document.createElement('a');
+        row.href = `quiz.html?exam=${encodeURIComponent(exam.id)}`;
+        row.className = 'bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-sky-300 transition flex items-center justify-between gap-3';
+        row.innerHTML = `
+          <div>
+            <h2 class="font-bold text-sm text-slate-900">${escapeHtml(exam.title)}</h2>
+            <p class="text-[11px] text-slate-400 mt-0.5">${escapeHtml(exam.subtitle || '')}</p>
+          </div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${meta.cls}">
+            ${meta.label}${status !== 'not-started' && progress.percent != null ? ` · ${progress.percent}%` : ''}
+          </span>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    boot();
+  </script>
+</body>
+</html>
