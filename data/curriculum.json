@@ -97,6 +97,20 @@
                   "author": "Ibrahim Alraslan",
                   "file": "data/exams/ethics-2023.json",
                   "referenceCourse": "مقرر أخلاقيات الطب - د. ياسر الكنش"
+                },
+                {
+                  "id": "ethics-batch8",
+                  "title": "دورة الدفعة الثامنة",
+                  "subtitle": "مقرر آداب الطب وأخلاقياته",
+                  "author": "Ibrahim Alraslan",
+                  "file": "data/exams/ethics-batch8.json"
+                },
+                {
+                  "id": "ethics-2022",
+                  "title": "دورة 2022",
+                  "subtitle": "مقرر آداب الطب وأخلاقياته",
+                  "author": "Ibrahim Alraslan",
+                  "file": "data/exams/ethics-2022.json"
                 }
               ]
             },
