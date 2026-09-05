@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>بنك اختبارات كلية الطب البشري</title>
 
+  <!-- مكتبات Firebase الرسمية لحماية الصفحة والتحقق من الجلسة -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,9 +33,14 @@
 <body class="min-h-screen text-slate-800 antialiased">
 
   <header class="bg-white/95 backdrop-blur-md border-b border-sky-100 sticky top-0 z-30 shadow-sm">
-    <div class="max-w-4xl mx-auto px-4 py-3">
-      <h1 class="text-lg sm:text-xl font-black text-sky-950">بنك اختبارات كلية الطب البشري</h1>
-      <p class="text-xs text-slate-500 mt-0.5">اختر سنتك الدراسية للبدء بالاختبارات</p>
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div>
+        <h1 class="text-lg sm:text-xl font-black text-sky-950">بنك اختبارات كلية الطب البشري</h1>
+        <p class="text-xs text-slate-500 mt-0.5">اختر سنتك الدراسية للبدء بالاختبارات</p>
+      </div>
+      <button onclick="logout()" class="text-xs bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold px-3 py-1.5 rounded-lg border border-slate-200 transition">
+        تسجيل الخروج
+      </button>
     </div>
   </header>
 
