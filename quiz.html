@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>اختبار - بنك اختبارات كلية الطب البشري</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Cairo & Tajawal -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Tajawal', 'Cairo', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#082f49',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    @keyframes pulse-fast {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.03); }
+    }
+    .animate-pulse-fast {
+      animation: pulse-fast 0.8s infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between pb-24 text-slate-800 antialiased selection:bg-sky-200">
+
+  <!-- Header & Visual Identity -->
+  <header class="bg-white/95 backdrop-blur-md border-b border-sky-100 sticky top-0 z-30 shadow-sm transition-all">
+    <div class="max-w-3xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
+      <div class="min-w-0">
+        <nav id="breadcrumb" class="text-[10px] text-slate-400 mb-0.5 truncate">
+          <a href="index.html" class="hover:text-sky-600">الرئيسية</a>
+        </nav>
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-sky-500 animate-ping shrink-0"></span>
+          <h1 id="exam-title" class="text-base sm:text-lg font-black text-sky-950 leading-tight truncate">جاري التحميل...</h1>
+        </div>
+        <p id="exam-subtitle" class="text-[11px] font-bold text-emerald-700 mt-0.5"></p>
+        <p class="text-[10px] text-slate-400 mt-0.5">💾 يُحفظ تقدمك تلقائياً على هذا المتصفح</p>
+      </div>
+
+      <div id="author-badge" class="flex items-center gap-2 shrink-0"></div>
+    </div>
+
+    <!-- Overall Progress Bar -->
+    <div class="w-full bg-slate-100 h-1.5 overflow-hidden">
+      <div id="overall-progress" class="bg-sky-500 h-full transition-all duration-300 w-0"></div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="max-w-3xl mx-auto w-full px-3 sm:px-4 pt-3 flex-1 flex flex-col gap-3">
+
+    <!-- Status & Tools Bar -->
+    <section class="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-400 font-semibold">التقدم:</span>
+          <span id="current-idx-display" class="font-black text-sky-700 text-sm">1</span>
+          <span class="text-slate-300">/</span>
+          <span id="total-q-display" class="font-bold text-slate-600">50</span>
+        </div>
+        <div class="h-4 w-px bg-slate-200"></div>
+        <div class="flex items-center gap-2 font-bold">
+          <span class="text-emerald-600 flex items-center gap-0.5"><span id="stat-correct">0</span> صح</span>
+          <span class="text-rose-500 flex items-center gap-0.5"><span id="stat-wrong">0</span> خطأ</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-1.5 flex-wrap">
+        <button id="btn-show-result-nav" onclick="showResultsModal()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition active:scale-95 font-bold">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span>النتيجة</span>
+        </button>
+
+        <button id="btn-shuffle" onclick="shuffleRemainingQuestions()" title="خلط الأسئلة المتبقية دون لمس السؤال الحالي" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 transition active:scale-95 font-bold">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span>خلط المتبقي</span>
+        </button>
+
+        <button id="btn-mode-retest" onclick="toggleRetestMode()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition active:scale-95 font-bold">
+          <span>إعادة الاختبار</span>
+          <span id="retest-badge" class="bg-amber-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">0</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Compact Question Card -->
+    <article id="question-card" class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm relative transition-all">
+      
+      <!-- Card Top Bar: Question Badge, Retest Toggle, and 60s Timer -->
+      <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-3 mb-3">
+        <div class="flex items-center gap-2">
+          <span id="q-number-pill" class="bg-sky-600 text-white font-extrabold text-xs px-2.5 py-1 rounded-lg shadow-sm">السؤال رقم 1</span>
+          <button id="btn-retest-toggle" onclick="toggleCurrentQuestionRetestManual()" class="text-[11px] font-bold text-slate-500 hover:text-amber-600 border border-slate-200 hover:border-amber-300 rounded-lg px-2 py-1 transition flex items-center gap-1 bg-slate-50">
+            <svg class="w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/></svg>
+            <span id="retest-toggle-label">إضافة لإعادة الاختبار</span>
+          </button>
+        </div>
+
+        <!-- 60s Question Timer -->
+        <div id="q-timer-container" class="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-xl font-mono text-xs font-black shadow-inner transition-colors">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span id="q-timer-text">60 ث</span>
+        </div>
+      </div>
+
+      <!-- Question Text -->
+      <div class="mb-3">
+        <h2 id="q-text" class="text-sm sm:text-base font-extrabold text-slate-900 leading-relaxed select-text">
+          جاري التحميل...
+        </h2>
+      </div>
+
+      <!-- Session Timer & Hint Area -->
+      <div class="flex items-center justify-between gap-2 bg-slate-50 border border-slate-100 rounded-xl px-3 py-1.5 mb-3 text-xs">
+        <div class="flex items-center gap-1.5 text-slate-600 font-semibold">
+          <svg class="w-3.5 h-3.5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>زمن الجلسة:</span>
+          <span id="session-time" class="font-mono font-extrabold text-slate-900">00:00</span>
+          <button id="btn-pause-session" onclick="toggleSessionTimer()" class="text-slate-400 hover:text-sky-600 mr-1" title="إيقاف مؤقت / تشغيل" aria-label="إيقاف مؤقت الجلسة أو استئنافه">
+            <svg id="session-play-pause-icon" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+          </button>
+        </div>
+
+        <button id="btn-hint" onclick="toggleHint()" class="text-sky-700 hover:text-sky-900 font-bold flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-sky-200 transition text-[11px]">
+          <span>💡 تلميح توجيهي</span>
+        </button>
+      </div>
+
+      <!-- Hidden Hint Box -->
+      <div id="hint-box" class="hidden mb-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-950 leading-relaxed">
+        <span class="font-bold block mb-0.5 text-amber-800">تلميح توجيهي:</span>
+        <p id="hint-text"></p>
+      </div>
+
+      <!-- Options Container (A-E) -->
+      <div id="options-container" class="space-y-2 mb-3" role="radiogroup" aria-label="خيارات الإجابة">
+        <!-- Injected via JS -->
+      </div>
+
+      <!-- Correction, Explanation & Exam Trap Section -->
+      <div id="feedback-section" class="hidden rounded-xl p-3.5 border transition-all mt-3">
+        <div id="feedback-status" class="flex items-center gap-2 font-bold text-xs sm:text-sm mb-2"></div>
+        
+        <!-- Wrong option specific review -->
+        <div id="feedback-wrong-review" class="hidden bg-white/90 p-2.5 rounded-lg border border-rose-200 text-xs text-rose-950 mb-2 leading-relaxed"></div>
+        
+        <!-- Correct option medical explanation -->
+        <div id="feedback-correct-explanation" class="bg-white/90 p-2.5 rounded-lg border border-emerald-200 text-xs text-emerald-950 leading-relaxed mb-2"></div>
+        
+        <!-- High-Yield Exam Trap Alert Box -->
+        <div id="feedback-exam-trap" class="bg-amber-50/90 p-2.5 rounded-lg border border-amber-300 text-xs text-amber-950 leading-relaxed mb-2">
+          <div class="flex items-center gap-1 font-black text-amber-900 mb-1">
+            <span>⚠️ فخ الامتحان وتنبيه هام:</span>
+          </div>
+          <p id="feedback-exam-trap-text" class="text-[11px]"></p>
+        </div>
+
+        <div class="flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-200/60 pt-2 mt-2">
+          <span>المصدر: <b id="ref-doc" class="text-slate-800 font-bold">مقرر أخلاقيات الطب - د. ياسر الكنش</b></span>
+          <span id="retest-mastery-action"></span>
+        </div>
+      </div>
+      
+      <!-- Auto scroll anchor -->
+      <div id="bottom-anchor" class="h-1"></div>
+    </article>
+  </main>
+
+  <!-- Floating Navigation Controls: Next on Right (يمين), Prev on Left (يسار) -->
+  <aside class="fixed bottom-3 inset-x-0 max-w-3xl mx-auto px-4 z-40 pointer-events-none">
+    <div class="flex items-center justify-between gap-3 pointer-events-auto">
+      
+      <!-- Previous Button (Left) -->
+      <button id="btn-prev" onclick="prevQuestion()" class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/95 backdrop-blur shadow-md hover:shadow-lg border border-slate-200 text-slate-700 font-bold text-xs sm:text-sm active:scale-95 transition disabled:opacity-30 disabled:pointer-events-none">
+        <svg class="w-4 h-4 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+        <span>السابق</span>
+      </button>
+
+      <!-- Next / Show Result Button (Right) -->
+      <button id="btn-next" onclick="nextQuestion()" class="flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 shadow-md hover:shadow-lg text-white font-bold text-xs sm:text-sm active:scale-95 transition">
+        <span id="btn-next-text">التالي</span>
+        <svg id="btn-next-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+      </button>
+
+    </div>
+  </aside>
+
+  <!-- Final Results Modal -->
+  <div id="result-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300" role="dialog" aria-modal="true" aria-labelledby="result-title">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-transform duration-300 scale-95 text-center flex flex-col gap-4">
+      
+      <!-- Header Icon -->
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center text-3xl shadow-inner" id="result-trophy-icon">
+        🏆
+      </div>
+
+      <div>
+        <h3 class="text-xl font-black text-slate-900" id="result-title">نتيجة الاختبار</h3>
+        <p class="text-xs text-slate-500 mt-0.5" id="result-subtitle">تفاصيل الاختبار</p>
+      </div>
+
+      <!-- Score Banner -->
+      <div class="bg-gradient-to-br from-sky-500 to-sky-700 text-white rounded-2xl p-4 shadow-md flex flex-col items-center justify-center">
+        <span class="text-xs font-bold text-sky-100">الدرجة النهائية</span>
+        <div class="text-4xl font-black tracking-tight my-1" id="result-percentage">0%</div>
+        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-white/20" id="result-eval-badge">تقييم الأداء</span>
+      </div>
+
+      <!-- Quick Stats Breakdown -->
+      <div class="grid grid-cols-3 gap-2 text-xs">
+        <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-2.5">
+          <span class="block text-slate-500 font-semibold mb-0.5">الإجابات الصحيحة</span>
+          <span class="font-black text-emerald-700 text-base" id="result-correct-count">0</span>
+        </div>
+        <div class="bg-rose-50 border border-rose-100 rounded-xl p-2.5">
+          <span class="block text-slate-500 font-semibold mb-0.5">الإجابات الخاطئة</span>
+          <span class="font-black text-rose-600 text-base" id="result-wrong-count">0</span>
+        </div>
+        <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
+          <span class="block text-slate-500 font-semibold mb-0.5">زمن الاختبار</span>
+          <span class="font-black text-slate-800 text-base" id="result-total-time">00:00</span>
+        </div>
+      </div>
+
+      <!-- Modal Action Buttons -->
+      <div class="flex flex-col gap-2 pt-2">
+        <button id="btn-result-retest-wrong" onclick="startRetestFromModal()" class="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md transition active:scale-95 flex items-center justify-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span id="btn-result-retest-label">إعادة اختبار الأسئلة المحتاجة مراجعة</span>
+        </button>
+
+        <button onclick="initApp({ tryResume: false }); closeResultsModal();" class="w-full py-2.5 px-4 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 font-bold text-xs border border-sky-200 transition active:scale-95 flex items-center justify-center gap-1.5">
+          <span>إعادة الاختبار بالكامل من البداية 🔄</span>
+        </button>
+
+        <button onclick="closeResultsModal()" class="w-full py-2 px-4 rounded-xl text-slate-500 hover:text-slate-800 font-bold text-xs transition">
+          إغلاق ومراجعة الأسئلة
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Shared site utilities: curriculum loading + progress tracking -->
+  <script src="assets/site.js"></script>
+
+  <!-- JavaScript Application Engine -->
+  <script>
+    /**
+     * Complete Question Bank with Medical Review, Options Review, and Exam Traps.
+     * Incorporating specific student corrections and verified lecture rulings.
+     */
+    // تُملأ ديناميكياً بعد جلب ملف اختبار JSON الخاص بالمادة المطلوبة (انظر loadExamAndBoot أسفل الملف)
+    let RAW_QUESTIONS = [];
+
+    // State Variables
+    let quizQuestions = [];
+    let currentFilteredIndices = [];
+    let activePointer = 0;
+    let userAnswers = {};
+    let retestSet = new Set();
+    let isRetestMode = false;
+
+    // Timers
+    let questionTimerInterval = null;
+    let questionTimeRemaining = 60;
+    let sessionTimerInterval = null;
+    let sessionSeconds = 0;
+    let isSessionPaused = false;
+
+    // Counters
+    let correctCount = 0;
+    let wrongCount = 0;
+
+    // Persistence (autosave / resume)
+    let STORAGE_KEY = 'quizState_default_v1';
+
+    function saveProgress() {
+      try {
+        const state = {
+          quizQuestions,
+          activePointer,
+          userAnswers,
+          retestSet: Array.from(retestSet),
+          isRetestMode,
+          correctCount,
+          wrongCount,
+          sessionSeconds
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.warn('تعذر حفظ التقدم تلقائياً:', e);
+      }
+
+      if (currentExamId && quizQuestions.length > 0) {
+        const answeredTotal = Object.keys(userAnswers).length;
+        const total = quizQuestions.length;
+        const status = answeredTotal === 0 ? 'not-started' : (answeredTotal >= total ? 'completed' : 'in-progress');
+        const percent = Math.round((correctCount / total) * 100);
+        setExamProgress(currentExamId, { status, percent, answeredTotal, total });
+      }
+    }
+
+    function loadProgress() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const state = JSON.parse(raw);
+        if (!state || !Array.isArray(state.quizQuestions) || state.quizQuestions.length === 0) return false;
+
+        quizQuestions = state.quizQuestions;
+        userAnswers = state.userAnswers || {};
+        retestSet = new Set(state.retestSet || []);
+        isRetestMode = !!state.isRetestMode;
+        correctCount = state.correctCount || 0;
+        wrongCount = state.wrongCount || 0;
+        sessionSeconds = state.sessionSeconds || 0;
+
+        buildActiveIndices();
+        if (currentFilteredIndices.length === 0) { isRetestMode = false; buildActiveIndices(); }
+        activePointer = Math.min(state.activePointer || 0, Math.max(currentFilteredIndices.length - 1, 0));
+        return true;
+      } catch (e) {
+        console.warn('تعذر استرجاع التقدم المحفوظ:', e);
+        return false;
+      }
+    }
+
+    function clearProgress() {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* لا شيء */ }
+    }
+
+    // Initialization
+    let currentExamId = null;
+    let currentExamContext = null; // { exam, subject, semester, year } من curriculum.json
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadExamAndBoot();
+    });
+
+    async function loadExamAndBoot() {
+      const params = new URLSearchParams(location.search);
+      currentExamId = params.get('exam');
+
+      if (!currentExamId) {
+        document.getElementById('exam-title').innerText = 'لم يُحدد اختبار';
+        showToast('الرجاء اختيار اختبار من صفحة المادة');
+        return;
+      }
+
+      try {
+        const curriculum = await loadCurriculum();
+        currentExamContext = findExamGlobally(curriculum, currentExamId);
+
+        if (!currentExamContext) {
+          document.getElementById('exam-title').innerText = 'الاختبار غير موجود';
+          return;
+        }
+
+        const { exam, subject, semester, year } = currentExamContext;
+
+        document.title = `${exam.title} - ${subject.name}`;
+        document.getElementById('exam-title').innerText = exam.title;
+        document.getElementById('exam-subtitle').innerText = exam.subtitle || subject.name;
+        document.getElementById('breadcrumb').innerHTML = `
+          <a href="index.html" class="hover:text-sky-600">الرئيسية</a>
+          <span class="mx-1">/</span>
+          <a href="year.html?year=${year.id}" class="hover:text-sky-600">${escapeHtml(year.name)}</a>
+          <span class="mx-1">/</span>
+          <a href="semester.html?year=${year.id}&sem=${semester.id}" class="hover:text-sky-600">${escapeHtml(semester.name)}</a>
+          <span class="mx-1">/</span>
+          <a href="subject.html?year=${year.id}&sem=${semester.id}&subject=${encodeURIComponent(subject.id)}" class="hover:text-sky-600">${escapeHtml(subject.name)}</a>
+        `;
+
+        if (exam.author) {
+          document.getElementById('author-badge').innerHTML = `
+            <div class="text-left bg-gradient-to-r from-sky-800 to-sky-950 text-white px-3 py-1 rounded-xl shadow border border-sky-700">
+              <span class="block text-[9px] uppercase tracking-wider text-sky-200 font-semibold">إعداد وتنسيق</span>
+              <span class="text-xs sm:text-sm font-extrabold tracking-wide text-white">${escapeHtml(exam.author)}</span>
+            </div>
+          `;
+        }
+
+        document.getElementById('result-subtitle').innerText = exam.subtitle || subject.name;
+
+        const res = await fetch(exam.file);
+        if (!res.ok) throw new Error('تعذر تحميل ملف الأسئلة');
+        RAW_QUESTIONS = await res.json();
+
+        STORAGE_KEY = `quizState_${currentExamId}_v1`;
+        initApp({ tryResume: true });
+      } catch (e) {
+        console.error(e);
+        document.getElementById('exam-title').innerText = 'تعذر تحميل الاختبار';
+        showToast('حدث خطأ أثناء تحميل بيانات الاختبار ⚠️');
+      }
+    }
+
+    function initApp(options = {}) {
+      const { tryResume = false } = options;
+      let resumed = tryResume ? loadProgress() : false;
+
+      if (!resumed) {
+        clearProgress();
+        quizQuestions = JSON.parse(JSON.stringify(RAW_QUESTIONS));
+        shuffleArray(quizQuestions);
+
+        retestSet.clear();
+        userAnswers = {};
+        correctCount = 0;
+        wrongCount = 0;
+        isRetestMode = false;
+        sessionSeconds = 0;
+
+        buildActiveIndices();
+        activePointer = 0;
+      }
+
+      isSessionPaused = false;
+      const mins = String(Math.floor(sessionSeconds / 60)).padStart(2, '0');
+      const secs = String(sessionSeconds % 60).padStart(2, '0');
+      document.getElementById('session-time').innerText = `${mins}:${secs}`;
+
+      const btnRetest = document.getElementById('btn-mode-retest');
+      if (isRetestMode) {
+        btnRetest.classList.add('bg-amber-600', 'text-white');
+        btnRetest.classList.remove('bg-amber-50', 'text-amber-800');
+      } else {
+        btnRetest.classList.remove('bg-amber-600', 'text-white');
+        btnRetest.classList.add('bg-amber-50', 'text-amber-800');
+      }
+
+      updateRetestBadge();
+      loadQuestion(activePointer);
+      updateStatsDisplay();
+      startSessionTimer();
+
+      if (resumed) {
+        showToast('تم استرجاع تقدمك السابق تلقائياً ↩️');
+      }
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function buildActiveIndices() {
+      currentFilteredIndices = [];
+      if (!isRetestMode) {
+        for (let i = 0; i < quizQuestions.length; i++) {
+          currentFilteredIndices.push(i);
+        }
+      } else {
+        for (let i = 0; i < quizQuestions.length; i++) {
+          if (retestSet.has(quizQuestions[i].id)) {
+            currentFilteredIndices.push(i);
+          }
+        }
+      }
+    }
+
+    function shuffleRemainingQuestions() {
+      const answeredQIds = new Set(Object.keys(userAnswers).map(Number));
+      const currentQ = quizQuestions[currentFilteredIndices[activePointer]];
+
+      const remainingUnanswered = [];
+      const others = [];
+
+      quizQuestions.forEach((q) => {
+        if (!answeredQIds.has(q.id) && q.id !== currentQ.id) {
+          remainingUnanswered.push(q);
+        } else {
+          others.push(q);
+        }
+      });
+
+      shuffleArray(remainingUnanswered);
+      quizQuestions = [...others.filter(q => q.id !== currentQ.id), currentQ, ...remainingUnanswered];
+      
+      buildActiveIndices();
+      activePointer = currentFilteredIndices.findIndex(idx => quizQuestions[idx].id === currentQ.id);
+      if (activePointer === -1) activePointer = 0;
+      
+      loadQuestion(activePointer);
+      showToast("تم خلط الأسئلة المتبقية بنجاح ✨");
+    }
+
+    function toggleRetestMode() {
+      if (retestSet.size === 0 && !isRetestMode) {
+        showToast("قائمة إعادة الاختبار فارغة حالياً!");
+        return;
+      }
+      isRetestMode = !isRetestMode;
+      const btn = document.getElementById('btn-mode-retest');
+      
+      if (isRetestMode) {
+        btn.classList.add('bg-amber-600', 'text-white');
+        btn.classList.remove('bg-amber-50', 'text-amber-800');
+        
+        // Reset answers for all questions in retest mode so student re-answers them
+        retestSet.forEach(id => {
+          if (userAnswers[id]) {
+            if (userAnswers[id].isCorrect) correctCount--;
+            else wrongCount--;
+            delete userAnswers[id];
+          }
+        });
+        updateStatsDisplay();
+
+        showToast("تم تفعيل وضع إعادة الاختبار وتصفير إجاباتها 🔄");
+      } else {
+        btn.classList.remove('bg-amber-600', 'text-white');
+        btn.classList.add('bg-amber-50', 'text-amber-800');
+        showToast("العودة لجميع الأسئلة 📚");
+      }
+
+      buildActiveIndices();
+      activePointer = 0;
+      if (currentFilteredIndices.length === 0) {
+        isRetestMode = false;
+        buildActiveIndices();
+      }
+      loadQuestion(activePointer);
+    }
+
+    function updateRetestBadge() {
+      document.getElementById('retest-badge').innerText = retestSet.size;
+    }
+
+    function loadQuestion(index) {
+      if (currentFilteredIndices.length === 0) return;
+
+      clearInterval(questionTimerInterval);
+      const qData = quizQuestions[currentFilteredIndices[index]];
+      
+      document.getElementById('q-number-pill').innerText = `السؤال رقم ${qData.id}`;
+      document.getElementById('current-idx-display').innerText = index + 1;
+      document.getElementById('total-q-display').innerText = currentFilteredIndices.length;
+      
+      const progressPercent = ((index + 1) / currentFilteredIndices.length) * 100;
+      document.getElementById('overall-progress').style.width = `${progressPercent}%`;
+
+      document.getElementById('q-text').innerText = `${qData.id} - ${qData.question}`;
+
+      const hintBox = document.getElementById('hint-box');
+      hintBox.classList.add('hidden');
+      document.getElementById('hint-text').innerText = qData.hint || "لا يوجد تلميح متوفر.";
+
+      updateRetestToggleBtn(qData.id);
+
+      const optionsContainer = document.getElementById('options-container');
+      optionsContainer.innerHTML = '';
+
+      const isAnswered = !!userAnswers[qData.id];
+      const savedAnswer = userAnswers[qData.id];
+
+      Object.entries(qData.options).forEach(([letter, text]) => {
+        const optionBtn = document.createElement('button');
+        optionBtn.type = 'button';
+        optionBtn.className = `w-full text-right p-3 rounded-xl border text-xs sm:text-sm font-medium transition-all duration-150 flex items-start gap-2.5 leading-relaxed focus:outline-none focus:ring-2 focus:ring-sky-400 ${
+          isAnswered ? 'cursor-default' : 'hover:bg-sky-50/80 hover:border-sky-300 active:scale-[0.99] bg-white border-slate-200'
+        }`;
+
+        let badgeStyle = "bg-slate-100 text-slate-700 border-slate-300";
+        if (isAnswered) {
+          if (letter === qData.correctLetter) {
+            optionBtn.classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-950', 'font-bold');
+            badgeStyle = "bg-emerald-600 text-white border-emerald-600";
+          } else if (savedAnswer && savedAnswer.chosenLetter === letter) {
+            optionBtn.classList.add('bg-rose-50', 'border-rose-400', 'text-rose-950', 'font-semibold');
+            badgeStyle = "bg-rose-600 text-white border-rose-600";
+          } else {
+            optionBtn.classList.add('opacity-60', 'bg-slate-50', 'border-slate-200');
+          }
+        }
+
+        optionBtn.innerHTML = `
+          <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg text-xs font-black border shrink-0 ${badgeStyle}">${letter}</span>
+          <span class="pt-0.5 flex-1 select-text">${text}</span>
+        `;
+
+        optionBtn.setAttribute('role', 'radio');
+        optionBtn.setAttribute('aria-checked', String(isAnswered && savedAnswer && savedAnswer.chosenLetter === letter));
+        optionBtn.setAttribute('tabindex', isAnswered ? '-1' : '0');
+
+        if (!isAnswered) {
+          optionBtn.onclick = () => selectAnswer(qData, letter);
+        }
+
+        optionsContainer.appendChild(optionBtn);
+      });
+
+      const feedbackSec = document.getElementById('feedback-section');
+      if (isAnswered) {
+        renderFeedback(qData, savedAnswer.chosenLetter, savedAnswer.isCorrect);
+        feedbackSec.classList.remove('hidden');
+      } else {
+        feedbackSec.classList.add('hidden');
+        startQuestionTimer(qData);
+      }
+
+      const masteryContainer = document.getElementById('retest-mastery-action');
+      if (isRetestMode && retestSet.has(qData.id)) {
+        masteryContainer.innerHTML = `
+          <button onclick="removeFromRetest(${qData.id})" class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2 py-1 rounded-md text-[11px] font-bold transition">
+            ✓ إزالة بعد الإتقان
+          </button>
+        `;
+      } else {
+        masteryContainer.innerHTML = '';
+      }
+
+      // Buttons State & Bottom bar
+      document.getElementById('btn-prev').disabled = (activePointer === 0);
+      
+      const isLastQuestion = (activePointer >= currentFilteredIndices.length - 1);
+      const nextBtnText = document.getElementById('btn-next-text');
+      const nextBtnIcon = document.getElementById('btn-next-icon');
+      
+      if (isLastQuestion) {
+        nextBtnText.innerText = "عرض النتيجة 🏁";
+        nextBtnIcon.classList.add('hidden');
+      } else {
+        nextBtnText.innerText = "التالي";
+        nextBtnIcon.classList.remove('hidden');
+      }
+
+      saveProgress();
+    }
+
+    function startQuestionTimer(qData) {
+      clearInterval(questionTimerInterval);
+      questionTimeRemaining = 60;
+      updateQuestionTimerUI();
+
+      questionTimerInterval = setInterval(() => {
+        if (!isSessionPaused) {
+          questionTimeRemaining--;
+          updateQuestionTimerUI();
+
+          if (questionTimeRemaining <= 10 && questionTimeRemaining > 0) {
+            if (!retestSet.has(qData.id)) {
+              retestSet.add(qData.id);
+              updateRetestBadge();
+              updateRetestToggleBtn(qData.id);
+            }
+          }
+
+          if (questionTimeRemaining <= 0) {
+            clearInterval(questionTimerInterval);
+            handleTimeOut(qData);
+          }
+        }
+      }, 1000);
+    }
+
+    function updateQuestionTimerUI() {
+      const timerContainer = document.getElementById('q-timer-container');
+      const timerText = document.getElementById('q-timer-text');
+      timerText.innerText = `${questionTimeRemaining} ث`;
+
+      if (questionTimeRemaining > 30) {
+        timerContainer.className = "flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-300 px-2.5 py-1 rounded-xl font-mono text-xs font-black shadow-inner";
+      } else if (questionTimeRemaining > 10) {
+        timerContainer.className = "flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-300 px-2.5 py-1 rounded-xl font-mono text-xs font-black shadow-inner";
+      } else {
+        timerContainer.className = "flex items-center gap-1.5 bg-rose-50 text-rose-700 border border-rose-300 px-2.5 py-1 rounded-xl font-mono text-xs font-black shadow-inner animate-pulse-fast";
+      }
+    }
+
+    function handleTimeOut(qData) {
+      if (userAnswers[qData.id]) return;
+
+      retestSet.add(qData.id);
+      updateRetestBadge();
+
+      userAnswers[qData.id] = {
+        chosenLetter: null,
+        timeTaken: 60,
+        isCorrect: false
+      };
+      wrongCount++;
+      updateStatsDisplay();
+
+      loadQuestion(activePointer);
+      showToast("انتهى وقت السؤال (60 ثانية) وتمت إضافته لإعادة الاختبار ⏱️");
+      scrollToFeedback();
+    }
+
+    function selectAnswer(qData, chosenLetter) {
+      if (userAnswers[qData.id]) return;
+
+      clearInterval(questionTimerInterval);
+      const timeTaken = 60 - questionTimeRemaining;
+      const isCorrect = (chosenLetter === qData.correctLetter);
+
+      if (!isCorrect || timeTaken >= 50) {
+        retestSet.add(qData.id);
+        updateRetestBadge();
+      }
+
+      if (isCorrect) {
+        correctCount++;
+        triggerCelebration();
+        const timerContainer = document.getElementById('q-timer-container');
+        timerContainer.className = "flex items-center gap-1.5 bg-emerald-100 text-emerald-800 border border-emerald-400 px-2.5 py-1 rounded-xl font-mono text-xs font-black";
+      } else {
+        wrongCount++;
+      }
+
+      userAnswers[qData.id] = {
+        chosenLetter,
+        timeTaken,
+        isCorrect
+      };
+
+      updateStatsDisplay();
+      loadQuestion(activePointer);
+      
+      setTimeout(scrollToFeedback, 100);
+
+      // Check if all questions completed -> trigger result modal automatically after brief pause
+      const answeredTotal = Object.keys(userAnswers).length;
+      if (answeredTotal === quizQuestions.length) {
+        setTimeout(showResultsModal, 1200);
+      }
+    }
+
+    function renderFeedback(qData, chosenLetter, isCorrect) {
+      const feedbackSec = document.getElementById('feedback-section');
+      const statusDiv = document.getElementById('feedback-status');
+      const wrongReviewDiv = document.getElementById('feedback-wrong-review');
+      const correctExpDiv = document.getElementById('feedback-correct-explanation');
+      const trapText = document.getElementById('feedback-exam-trap-text');
+      const refDoc = document.getElementById('ref-doc');
+
+      refDoc.innerText = `${qData.referenceDocument} (${qData.referencePage})`;
+      trapText.innerText = qData.examTrap || "انتبه دوماً للضوابط الكلية والاستثناءات الفقهية الدقيقة.";
+
+      if (isCorrect) {
+        feedbackSec.className = "rounded-xl p-3.5 border bg-emerald-50/70 border-emerald-200 text-emerald-950 mt-3 animate-fadeIn";
+        statusDiv.innerHTML = `
+          <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-600 text-white text-xs">✓</span>
+          <span class="text-emerald-800 font-black">إجابة صحيحة وموفقة!</span>
+        `;
+        wrongReviewDiv.classList.add('hidden');
+        correctExpDiv.innerHTML = `
+          <b class="font-bold text-emerald-900 block mb-1">التعليل الطبي المعتمد (${qData.correctLetter}):</b>
+          <p>${qData.correctExplanation}</p>
+        `;
+      } else {
+        feedbackSec.className = "rounded-xl p-3.5 border bg-rose-50/70 border-rose-200 text-rose-950 mt-3 animate-fadeIn";
+        statusDiv.innerHTML = `
+          <span class="flex items-center justify-center w-5 h-5 rounded-full bg-rose-600 text-white text-xs">✕</span>
+          <span class="text-rose-800 font-black">إجابة خاطئة!</span>
+        `;
+
+        if (chosenLetter && qData.optionReviews && qData.optionReviews[chosenLetter]) {
+          wrongReviewDiv.classList.remove('hidden');
+          wrongReviewDiv.innerHTML = `
+            <b class="font-bold text-rose-800 block mb-0.5">سبب خطأ الخيار المختار (${chosenLetter}):</b>
+            <p>${qData.optionReviews[chosenLetter]}</p>
+          `;
+        } else {
+          wrongReviewDiv.classList.add('hidden');
+        }
+
+        correctExpDiv.innerHTML = `
+          <div class="mb-1 text-emerald-900">
+            <span class="font-bold">الإجابة الصحيحة المعتمدة:</span> 
+            <span class="font-black underline">${qData.correctLetter}</span> - <span>${qData.options[qData.correctLetter]}</span>
+          </div>
+          <p class="text-[11px] text-emerald-900 leading-normal pt-1 border-t border-emerald-200/60">${qData.correctExplanation}</p>
+        `;
+      }
+    }
+
+    function scrollToFeedback() {
+      const anchor = document.getElementById('bottom-anchor');
+      if (anchor) {
+        anchor.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+    }
+
+    function triggerCelebration() {
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReducedMotion || typeof confetti !== 'function') return;
+
+      confetti({
+        particleCount: 35,
+        spread: 60,
+        origin: { y: 0.9, x: 0.5 },
+        ticks: 80,
+        disableForReducedMotion: true,
+        colors: ['#0284c7', '#38bdf8', '#10b981', '#fbbf24']
+      });
+    }
+
+    function toggleCurrentQuestionRetestManual() {
+      const qData = quizQuestions[currentFilteredIndices[activePointer]];
+      if (retestSet.has(qData.id)) {
+        retestSet.delete(qData.id);
+        showToast("تمت الإزالة من إعادة الاختبار");
+      } else {
+        retestSet.add(qData.id);
+        showToast("تمت الإضافة إلى إعادة الاختبار 📌");
+      }
+      updateRetestBadge();
+      updateRetestToggleBtn(qData.id);
+    }
+
+    function updateRetestToggleBtn(qId) {
+      const label = document.getElementById('retest-toggle-label');
+      const btn = document.getElementById('btn-retest-toggle');
+      if (retestSet.has(qId)) {
+        label.innerText = "ضمن إعادة الاختبار ✓";
+        btn.classList.add('bg-amber-100', 'border-amber-300', 'text-amber-800');
+        btn.classList.remove('bg-slate-50', 'text-slate-500');
+      } else {
+        label.innerText = "إضافة لإعادة الاختبار";
+        btn.classList.remove('bg-amber-100', 'border-amber-300', 'text-amber-800');
+        btn.classList.add('bg-slate-50', 'text-slate-500');
+      }
+    }
+
+    function removeFromRetest(qId) {
+      retestSet.delete(qId);
+      updateRetestBadge();
+      showToast("تمت إزالة السؤال بعد إتقانه بنجاح! 🎯");
+      
+      if (isRetestMode) {
+        buildActiveIndices();
+        if (activePointer >= currentFilteredIndices.length) {
+          activePointer = Math.max(0, currentFilteredIndices.length - 1);
+        }
+        if (currentFilteredIndices.length === 0) {
+          toggleRetestMode();
+        } else {
+          loadQuestion(activePointer);
+        }
+      } else {
+        loadQuestion(activePointer);
+      }
+    }
+
+    function toggleHint() {
+      const hintBox = document.getElementById('hint-box');
+      hintBox.classList.toggle('hidden');
+    }
+
+    function startSessionTimer() {
+      clearInterval(sessionTimerInterval);
+      sessionTimerInterval = setInterval(() => {
+        if (!isSessionPaused) {
+          sessionSeconds++;
+          const mins = String(Math.floor(sessionSeconds / 60)).padStart(2, '0');
+          const secs = String(sessionSeconds % 60).padStart(2, '0');
+          document.getElementById('session-time').innerText = `${mins}:${secs}`;
+          if (sessionSeconds % 10 === 0) saveProgress();
+        }
+      }, 1000);
+    }
+
+    // ضمان حفظ آخر حالة عند إغلاق الصفحة أو مغادرتها
+    window.addEventListener('beforeunload', saveProgress);
+    window.addEventListener('pagehide', saveProgress);
+
+    function toggleSessionTimer() {
+      isSessionPaused = !isSessionPaused;
+      const icon = document.getElementById('session-play-pause-icon');
+      if (isSessionPaused) {
+        icon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>';
+        showToast("تم إيقاف مؤقت الجلسة ⏸️");
+      } else {
+        icon.innerHTML = '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>';
+        showToast("تم استئناف مؤقت الجلسة ▶️");
+      }
+    }
+
+    function nextQuestion() {
+      if (activePointer < currentFilteredIndices.length - 1) {
+        activePointer++;
+        loadQuestion(activePointer);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        // Last question reached -> show results
+        showResultsModal();
+      }
+    }
+
+    function prevQuestion() {
+      if (activePointer > 0) {
+        activePointer--;
+        loadQuestion(activePointer);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function updateStatsDisplay() {
+      document.getElementById('stat-correct').innerText = correctCount;
+      document.getElementById('stat-wrong').innerText = wrongCount;
+    }
+
+    // Results Modal Logic
+    function showResultsModal() {
+      const totalCount = quizQuestions.length;
+      const answeredCount = Object.keys(userAnswers).length;
+      const percent = Math.round((correctCount / totalCount) * 100);
+
+      document.getElementById('result-percentage').innerText = `${percent}%`;
+      document.getElementById('result-correct-count').innerText = `${correctCount} / ${totalCount}`;
+      document.getElementById('result-wrong-count').innerText = `${wrongCount}`;
+
+      const mins = String(Math.floor(sessionSeconds / 60)).padStart(2, '0');
+      const secs = String(sessionSeconds % 60).padStart(2, '0');
+      document.getElementById('result-total-time').innerText = `${mins}:${secs}`;
+
+      // Evaluation Text & Badge
+      const evalBadge = document.getElementById('result-eval-badge');
+      const iconDiv = document.getElementById('result-trophy-icon');
+      
+      if (percent >= 90) {
+        evalBadge.innerText = "ممتاز جداً - تفوق ملحوظ في المادة 🌟";
+        iconDiv.innerText = "🏆";
+        triggerCelebration();
+      } else if (percent >= 75) {
+        evalBadge.innerText = "جيد جداً - تمكن متين من المادة ✨";
+        iconDiv.innerText = "🎖️";
+      } else if (percent >= 60) {
+        evalBadge.innerText = "مستوى مقبول - يُفضل مراجعة الأخطاء 📖";
+        iconDiv.innerText = "📈";
+      } else {
+        evalBadge.innerText = "بحاجة لمراجعة وتثبيت المفاهيم 💡";
+        iconDiv.innerText = "🎯";
+      }
+
+      // Retest Button text inside modal
+      const retestBtn = document.getElementById('btn-result-retest-wrong');
+      const retestLabel = document.getElementById('btn-result-retest-label');
+      if (retestSet.size > 0) {
+        retestBtn.classList.remove('hidden');
+        retestLabel.innerText = `إعادة اختبار الأسئلة المحتاجة مراجعة (${retestSet.size} سؤال)`;
+      } else {
+        retestBtn.classList.add('hidden');
+      }
+
+      const modal = document.getElementById('result-modal');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.children[0].classList.remove('scale-95');
+      }, 20);
+    }
+
+    function closeResultsModal() {
+      const modal = document.getElementById('result-modal');
+      modal.classList.add('opacity-0');
+      modal.children[0].classList.add('scale-95');
+      setTimeout(() => modal.classList.add('hidden'), 250);
+    }
+
+    function startRetestFromModal() {
+      closeResultsModal();
+      if (!isRetestMode) {
+        toggleRetestMode();
+      }
+    }
+
+    function showToast(message) {
+      const existing = document.getElementById('toast-msg');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.id = 'toast-msg';
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'polite');
+      toast.className = 'fixed top-16 left-1/2 transform -translate-x-1/2 bg-slate-900/90 backdrop-blur-md text-white px-4 py-2 rounded-xl text-xs font-bold shadow-xl z-50 transition-all animate-bounce';
+      toast.innerText = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 2000);
+    }
+
+    // اختصارات لوحة المفاتيح: أسهم للتنقل، أرقام/حروف لاختيار الإجابة، Esc لإغلاق النتيجة
+    function selectOptionByLetter(letter) {
+      const qData = quizQuestions[currentFilteredIndices[activePointer]];
+      if (!qData || !qData.options[letter] || userAnswers[qData.id]) return;
+      selectAnswer(qData, letter);
+    }
+
+    function selectOptionByIndex(idx) {
+      const qData = quizQuestions[currentFilteredIndices[activePointer]];
+      if (!qData) return;
+      const letters = Object.keys(qData.options);
+      if (idx < 0 || idx >= letters.length) return;
+      selectOptionByLetter(letters[idx]);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      const modal = document.getElementById('result-modal');
+      const modalOpen = modal && !modal.classList.contains('hidden');
+
+      if (e.key === 'Escape' && modalOpen) {
+        closeResultsModal();
+        return;
+      }
+      if (modalOpen) return; // لا تتفاعل مع اختصارات الأسئلة أثناء عرض النتيجة
+
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        nextQuestion();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevQuestion();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        nextQuestion();
+      } else if (/^[1-5]$/.test(e.key)) {
+        selectOptionByIndex(Number(e.key) - 1);
+      } else if (/^[a-eA-E]$/.test(e.key)) {
+        selectOptionByLetter(e.key.toUpperCase());
+      }
+    });
+  </script>
+</body>
+</html>
